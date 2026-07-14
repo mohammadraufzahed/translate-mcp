@@ -1,0 +1,14 @@
+[Unit]
+Description=Advanced Translate MCP Server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/translate-mcp --config /etc/translate-mcp/config.yaml
+Restart=on-failure
+EnvironmentFile=/etc/translate-mcp/env
+User=translate-mcp
+Group=translate-mcp
+
+[Install]
+WantedBy=multi-user.target

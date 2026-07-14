@@ -1,0 +1,37 @@
+services:
+  translate-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8787:8787"
+    environment:
+      - TRANSLATE_MCP_TOKEN=${TRANSLATE_MCP_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DEEPL_API_KEY=${DEEPL_API_KEY}
+      - DATABASE_DSN=${DATABASE_DSN:-postgres://mcp:secret@postgres:5432/mcp?sslmode=disable}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - ./config.example.yaml:/app/config.yaml:ro
+    depends_on:
+      - redis
+      - postgres
+    command: ["--config", "/app/config.yaml", "--transport", "http", "--port", "8787"]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mcp
+      POSTGRES_USER: mcp
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
