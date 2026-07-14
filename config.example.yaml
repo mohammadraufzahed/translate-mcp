@@ -1,0 +1,64 @@
+server:
+  transport: http
+  host: 0.0.0.0
+  port: 8787
+  auth:
+    type: bearer
+    token: ${TRANSLATE_MCP_TOKEN}
+  cors:
+    allowed_origins: ["*"]
+
+logging:
+  format: json
+  level: info
+  mask_text: true
+
+metrics:
+  enabled: true
+  path: /metrics
+
+cache:
+  default_ttl: 24h
+  l1:
+    type: memory
+    max_entries: 10000
+  l2:
+    type: redis
+    address: redis:6379
+    password: ${REDIS_PASSWORD}
+  l3:
+    type: postgres
+    dsn: ${DATABASE_DSN}
+
+providers:
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    default_model: gpt-4o
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+    default_model: claude-3-5-sonnet-20241022
+  deepl:
+    api_key: ${DEEPL_API_KEY}
+    base_url: https://api.deepl.com
+  ollama:
+    base_url: http://localhost:11434
+    default_model: llama3.1
+  libretranslate:
+    base_url: https://libretranslate.com
+  custom:
+    base_url: http://localhost:8000/v1
+    default_model: default
+
+translation:
+  default_provider: openai
+  max_text_length: 10000
+  max_batch_items: 50
+  request_timeout: 60s
+  fallback_chain: [openai, deepl, ollama]
+  glossary_preprocessing: true
+
+vector:
+  enabled: false
+  provider: openai
+  embedding_model: text-embedding-3-small
+  similarity_threshold: 0.85
