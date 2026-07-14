@@ -1,16 +1,24 @@
+# translate-mcp example configuration
+# All environment variables are expanded at load time.
+# Copy this file to config.yaml and edit for your environment.
+
 server:
+  # Transport: stdio for local MCP hosts (Claude Desktop), http for remote access
   transport: http
   host: 0.0.0.0
   port: 8787
   auth:
+    # Set to bearer and provide a token to protect the HTTP endpoints
     type: bearer
     token: ${TRANSLATE_MCP_TOKEN}
   cors:
+    # Restrict to known origins in production
     allowed_origins: ["*"]
 
 logging:
   format: json
   level: info
+  # When true, source text is omitted from logs
   mask_text: true
 
 metrics:
@@ -20,38 +28,64 @@ metrics:
 cache:
   default_ttl: 24h
   l1:
+    # In-memory LRU cache per process
     type: memory
     max_entries: 10000
   l2:
+    # Shared Redis cache for multi-instance deployments
     type: redis
     address: redis:6379
     password: ${REDIS_PASSWORD}
+    ttl: 24h
   l3:
+    # Durable SQL cache and translation memory
     type: postgres
     dsn: ${DATABASE_DSN}
+    ttl: 720h
 
 providers:
+  # OpenAI: https://platform.openai.com
   openai:
     api_key: ${OPENAI_API_KEY}
     default_model: gpt-4o
-  anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
-    default_model: claude-3-5-sonnet-20241022
-  deepl:
-    api_key: ${DEEPL_API_KEY}
-    base_url: https://api.deepl.com
-  ollama:
-    base_url: http://localhost:11434
-    default_model: llama3.1
-  libretranslate:
-    base_url: https://libretranslate.com
+
+  # OpenRouter: https://openrouter.ai
   openrouter:
     api_key: ${OPENROUTER_API_KEY}
     default_model: openai/gpt-4o-mini
     site_url: https://github.com/mohammadraufzahed/translate-mcp
     site_name: translate-mcp
+
+  # Anthropic: https://console.anthropic.com
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+    default_model: claude-3-5-sonnet-20241022
+
+  # DeepL: https://www.deepl.com/pro-api
+  deepl:
+    api_key: ${DEEPL_API_KEY}
+    # Use https://api-free.deepl.com for the free plan
+    base_url: https://api.deepl.com
+
+  # Google Gemini: https://ai.google.dev
+  google:
+    api_key: ${GOOGLE_API_KEY}
+    default_model: gemini-1.5-flash
+
+  # Ollama: local/self-hosted models
+  ollama:
+    base_url: http://localhost:11434
+    default_model: llama3.1
+
+  # LibreTranslate: https://libretranslate.com or self-hosted
+  libretranslate:
+    base_url: https://libretranslate.com
+    api_key: ${LIBRETRANSLATE_API_KEY}
+
+  # Custom OpenAI-compatible endpoint
   custom:
     base_url: http://localhost:8000/v1
+    api_key: ${CUSTOM_API_KEY}
     default_model: default
 
 translation:
@@ -59,10 +93,11 @@ translation:
   max_text_length: 10000
   max_batch_items: 50
   request_timeout: 60s
-  fallback_chain: [openai, deepl, ollama]
+  fallback_chain: [openai, openrouter, deepl, ollama]
   glossary_preprocessing: true
 
 vector:
+  # Reserved for future semantic translation memory
   enabled: false
   provider: openai
   embedding_model: text-embedding-3-small

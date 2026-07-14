@@ -31,7 +31,7 @@ func translateTool() mcp.Tool {
 		mcp.WithString("text", mcp.Required(), mcp.Description("Text to translate")),
 		mcp.WithString("target_language", mcp.Required(), mcp.Description("BCP-47 code, e.g. 'es', 'zh-CN', 'fr-FR'")),
 		mcp.WithString("source_language", mcp.Description("Source BCP-47 code or 'auto'"), mcp.DefaultString("auto")),
-		mcp.WithString("provider", mcp.Description("Preferred engine: openai, anthropic, deepl, google, ollama, libretranslate, custom")),
+		mcp.WithString("provider", mcp.Description("Preferred engine: openai, openrouter, anthropic, deepl, google, ollama, libretranslate, custom")),
 		mcp.WithString("model", mcp.Description("Specific model ID")),
 		mcp.WithString("context", mcp.Description("Domain/tone hint, e.g. 'medical', 'software UI'.")),
 		mcp.WithString("tone", mcp.Description("Tone: formal, informal, neutral"), mcp.DefaultString("neutral")),
