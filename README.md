@@ -2,6 +2,7 @@
 
 A production-grade, AI-powered translation server for the [Model Context Protocol](https://modelcontextprotocol.io). Run it as a single static binary, a Docker container, or a Kubernetes service and connect any MCP-compatible host to translate text, documents, and JSON i18n files with caching, glossaries, translation memory, and multi-provider fallback.
 
+[![CI](https://github.com/mohammadraufzahed/translate-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/mohammadraufzahed/translate-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## Features
