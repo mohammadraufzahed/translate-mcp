@@ -48,6 +48,30 @@ archives:
       - LICENSE
       - config.example.yaml
 
+nfpms:
+  - id: translate-mcp
+    package_name: translate-mcp
+    file_name_template: "{{ .ConventionalFileName }}"
+    vendor: "Mohammad Raufzahed"
+    homepage: https://github.com/mohammadraufzahed/translate-mcp
+    maintainer: "Mohammad Raufzahed <mohammadraufzahed@protonmail.com>"
+    description: "A production-grade translation server for the Model Context Protocol."
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+      - termux.deb
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/doc/translate-mcp/LICENSE
+      - src: ./README.md
+        dst: /usr/share/doc/translate-mcp/README.md
+      - src: ./config.example.yaml
+        dst: /usr/share/doc/translate-mcp/config.example.yaml
+    bindir: /usr/bin
+
 checksum:
   name_template: "checksums.txt"
 
