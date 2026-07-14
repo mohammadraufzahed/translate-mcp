@@ -1,5 +1,5 @@
 # Binaries
-translate-mcp
+/translate-mcp
 *.exe
 *.dll
 *.so

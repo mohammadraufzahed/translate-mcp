@@ -3,6 +3,8 @@
 A production-grade, AI-powered translation server for the [Model Context Protocol](https://modelcontextprotocol.io). Run it as a single static binary, a Docker container, or a Kubernetes service and connect any MCP-compatible host to translate text, documents, and JSON i18n files with caching, glossaries, translation memory, and multi-provider fallback.
 
 [![CI](https://github.com/mohammadraufzahed/translate-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/mohammadraufzahed/translate-mcp/actions/workflows/ci.yml)
+[![Release](https://github.com/mohammadraufzahed/translate-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/mohammadraufzahed/translate-mcp/releases)
+[![Docker](https://github.com/mohammadraufzahed/translate-mcp/actions/workflows/docker.yml/badge.svg)](https://github.com/mohammadraufzahed/translate-mcp/pkgs/container/translate-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## Features
@@ -233,6 +235,23 @@ go vet ./...
 ```
 
 The server exposes tools, routes each translation request through the cache, optionally applies glossary masking, queries translation memory, then calls the configured provider chain. Results are cached and, on success, optionally stored in translation memory.
+
+## CI/CD
+
+- **Pull requests** trigger `go vet`, `gofmt`, `go test -race`, cross-compilation, and a Docker build for `linux/amd64` and `linux/arm64`.
+- **Merges to `main`** build and push a Docker image to `ghcr.io/mohammadraufzahed/translate-mcp`.
+- **Semver tags `v*.*.*`** trigger GoReleaser, which publishes binaries for Linux, macOS, and Windows on amd64 and arm64, plus a GitHub release.
+
+## Releasing
+
+```bash
+git checkout main
+git pull
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+GoReleaser and the Docker workflow will handle the rest.
 
 ## License
 
