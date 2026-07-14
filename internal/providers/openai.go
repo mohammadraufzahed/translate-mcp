@@ -12,11 +12,12 @@ import (
 )
 
 type openAIProvider struct {
-	name       string
-	apiKey     string
-	baseURL    string
-	model      string
-	httpClient *http.Client
+	name         string
+	apiKey       string
+	baseURL      string
+	model        string
+	extraHeaders map[string]string
+	httpClient   *http.Client
 }
 
 func newOpenAI(name string, cfg config.ProviderConfig, timeout time.Duration) (Translator, error) {
@@ -64,23 +65,21 @@ func (p *openAIProvider) Translate(ctx context.Context, req TranslationRequest) 
 		"response_format": map[string]string{"type": "json_object"},
 	}
 
-	headers := map[string]string{
-		"Authorization": "Bearer " + p.apiKey,
-	}
+	headers := p.authHeaders()
 	data, status, err := doJSON(ctx, p.httpClient, "POST", p.baseURL+"/chat/completions", headers, body)
 	if err != nil {
 		if status == 429 {
-			return nil, fmt.Errorf("%w: openai rate limited", common.ErrRateLimited)
+			return nil, fmt.Errorf("%w: %s rate limited", common.ErrRateLimited, p.name)
 		}
-		return nil, fmt.Errorf("openai translate failed: %w", err)
+		return nil, fmt.Errorf("%s translate failed: %w", p.name, err)
 	}
 
 	var resp openAIChatResponse
 	if err := json.Unmarshal(data, &resp); err != nil {
-		return nil, fmt.Errorf("openai decode failed: %w", err)
+		return nil, fmt.Errorf("%s decode failed: %w", p.name, err)
 	}
 	if len(resp.Choices) == 0 {
-		return nil, fmt.Errorf("openai returned no choices")
+		return nil, fmt.Errorf("%s returned no choices", p.name)
 	}
 	content := resp.Choices[0].Message.Content
 	result, err := parseLLMResult([]byte(content), req.SourceLang, p.name, model)
@@ -109,7 +108,7 @@ func (p *openAIProvider) DetectLanguage(ctx context.Context, text string) (strin
 		"max_tokens":      128,
 		"response_format": map[string]string{"type": "json_object"},
 	}
-	headers := map[string]string{"Authorization": "Bearer " + p.apiKey}
+	headers := p.authHeaders()
 	data, _, err := doJSON(ctx, p.httpClient, "POST", p.baseURL+"/chat/completions", headers, body)
 	if err != nil {
 		return "", 0, err
@@ -143,7 +142,9 @@ func (p *openAIProvider) Health(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", "Bearer "+p.apiKey)
+	for k, v := range p.authHeaders() {
+		req.Header.Set(k, v)
+	}
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -153,6 +154,14 @@ func (p *openAIProvider) Health(ctx context.Context) error {
 		return fmt.Errorf("models endpoint returned %d", resp.StatusCode)
 	}
 	return nil
+}
+
+func (p *openAIProvider) authHeaders() map[string]string {
+	h := map[string]string{"Authorization": "Bearer " + p.apiKey}
+	for k, v := range p.extraHeaders {
+		h[k] = v
+	}
+	return h
 }
 
 type openAIChatResponse struct {

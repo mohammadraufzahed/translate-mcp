@@ -52,6 +52,7 @@ type Factory func(name string, cfg config.ProviderConfig, timeout time.Duration)
 
 var registry = map[string]Factory{
 	"openai":         newOpenAI,
+	"openrouter":     newOpenRouter,
 	"anthropic":      newAnthropic,
 	"deepl":          newDeepL,
 	"google":         newGoogle,
