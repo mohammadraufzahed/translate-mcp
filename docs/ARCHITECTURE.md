@@ -1,8 +1,8 @@
 # Architecture
 
-## Overview
+`translate-mcp` is a stateless/semi-stateless MCP tool server written in Go. It translates text through a pluggable provider layer while adding caching, glossary masking, translation memory, and resilience.
 
-`translate-mcp` is a stateless/semi-stateless tool server that implements the Model Context Protocol (MCP). It is designed to be plugged into any MCP host (Claude Desktop, Cursor, Windsurf, custom clients) and provides reliable, domain-aware, cached translation.
+## High-level flow
 
 ```
 ┌─────────────────────┐      stdio / HTTP       ┌─────────────────────┐
@@ -16,13 +16,22 @@
       Tools      Cache     Glossary   Memory     Metrics        Providers
 ```
 
+1. The MCP host calls a tool via `stdio` or streamable HTTP.
+2. The server validates the request.
+3. It computes a cache key and checks the cache tier chain.
+4. If there is a cache miss, it applies glossary masking and translation-memory search.
+5. It calls the primary provider. If that fails, it walks the fallback chain.
+6. It restores glossary placeholders, writes the result to cache, and returns JSON.
+
 ## Components
 
 ### MCP Server
 
-- Built with `github.com/mark3labs/mcp-go`.
-- Supports `stdio` transport for local clients and **Streamable HTTP** (`/mcp`) for remote access.
-- Registers MCP tools and handles tool invocations.
+Built with `github.com/mark3labs/mcp-go`.
+
+- `stdio` transport for local clients such as Claude Desktop.
+- Streamable HTTP transport at `/mcp` for remote clients such as Cursor and Windsurf.
+- Registers tools and handles JSON-RPC tool calls.
 
 ### Provider layer
 
@@ -41,6 +50,7 @@ type Translator interface {
 Supported providers:
 
 - OpenAI
+- OpenRouter
 - Anthropic
 - DeepL
 - Google (Gemini)
@@ -48,7 +58,7 @@ Supported providers:
 - LibreTranslate
 - Custom OpenAI-compatible endpoints
 
-Adding a new provider only requires implementing the interface and registering it in the provider factory.
+Adding a provider means implementing the interface and registering it in the provider factory.
 
 ### Cache
 
@@ -56,11 +66,11 @@ The cache is a three-tier chain:
 
 | Tier | Backend | Use case |
 |------|---------|----------|
-| L1   | In-memory LRU with TTL | Fast exact-hit cache |
-| L2   | Redis | Shared cache across multiple instances |
-| L3   | SQLite / Postgres | Durable translation memory and long-term cache |
+| L1 | In-memory LRU with TTL | Fast exact-hit cache per process |
+| L2 | Redis | Shared cache across multiple instances |
+| L3 | SQLite / Postgres | Durable translation memory and long-term cache |
 
-The cache key is a SHA-256 hash of text, source/target languages, provider, model, context, tone, and glossary version.
+The cache key is a SHA-256 hash of text, source/target languages, provider, model, context, tone, and glossary version. This keeps storage keys opaque and avoids leaking source text into cache storage.
 
 ### Glossary pipeline
 
@@ -69,11 +79,11 @@ The cache key is a SHA-256 hash of text, source/target languages, provider, mode
 3. Send masked text to the provider with a context hint and placeholder mapping.
 4. Restore placeholders to their target translations.
 
-This prevents drift for names, brands, and domain terms.
+This prevents drift for names, brands, and domain terms while still letting the LLM translate the surrounding text.
 
 ### Translation memory
 
-Stores verified or frequently used translations with fuzzy matching. Before calling a provider, the server can search the memory for a close match and reuse it, reducing API cost for repetitive content.
+Stores verified or frequently used translations with fuzzy matching. Before calling a provider, the server searches the memory for a close match and can reuse it, reducing API cost for repetitive content.
 
 ### Resilience
 
@@ -89,9 +99,49 @@ Stores verified or frequently used translations with fuzzy matching. Before call
 - `/health` endpoint with provider connectivity.
 - `/metrics` endpoint with Prometheus counters and histograms.
 
+## Data flow for `translate`
+
+```
+MCP request
+    │
+    ▼
+Validate arguments
+    │
+    ▼
+Normalize text and language codes
+    │
+    ▼
+Resolve provider + fallback chain
+    │
+    ▼
+Compute cache key
+    │
+    ▼
+Check L1 → L2 → L3 cache
+    │
+    ▼
+(optional) Search translation memory
+    │
+    ▼
+(optional) Apply glossary masking
+    │
+    ▼
+Call provider (with rate limit, semaphore, circuit breaker)
+    │
+    ▼
+Restore glossary placeholders
+    │
+    ▼
+Store result in cache
+    │
+    ▼
+Return JSON response
+```
+
 ## Security
 
 - Bearer token authentication on HTTP.
 - CORS allow-list.
 - Input length and batch-size limits.
 - API keys are read from environment variables and never logged.
+- Cache keys are hashed so source text is not stored as plain keys.
