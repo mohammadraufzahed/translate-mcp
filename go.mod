@@ -9,7 +9,7 @@ require (
 	github.com/mark3labs/mcp-go v0.56.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.8.0
-	golang.org/x/time v0.11.0
+	golang.org/x/time v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.53.0
 )
