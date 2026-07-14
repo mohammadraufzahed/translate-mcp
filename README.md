@@ -10,7 +10,7 @@ A production-grade, AI-powered translation server for the [Model Context Protoco
 ## Features
 
 - **MCP-native tools**: `translate`, `detect_language`, `batch_translate`, `translate_document`, `list_languages`, `add_glossary_entry`, `get_glossary`, `search_translation_memory`, `add_translation_memory`.
-- **Pluggable translation providers**: OpenAI, Anthropic, DeepL, Google (Gemini), Ollama, LibreTranslate, and any OpenAI-compatible endpoint.
+- **Pluggable translation providers**: OpenAI, OpenRouter, Anthropic, DeepL, Google (Gemini), Ollama, LibreTranslate, and any OpenAI-compatible endpoint.
 - **Multi-tier cache**: in-memory L1, Redis L2, and SQLite/Postgres L3 with a single key space.
 - **Glossary pipeline**: protects terms and brand names by replacing them with placeholders before translation and restoring them after.
 - **Translation memory**: fuzzy search over previously stored or approved translations.
@@ -110,6 +110,7 @@ See [`config.example.yaml`](config.example.yaml) for a full example.
 | Provider | Required config | Notes |
 |----------|-----------------|-------|
 | `openai` | `api_key` | GPT-4o, GPT-4o-mini, etc. |
+| `openrouter` | `api_key` | Any OpenRouter model (e.g. `openai/gpt-4o-mini`) |
 | `anthropic` | `api_key` | Claude 3.5 Sonnet, etc. |
 | `deepl` | `api_key` | Free/pro endpoints supported via `base_url` |
 | `google` | `api_key` | Gemini via Generative Language API |

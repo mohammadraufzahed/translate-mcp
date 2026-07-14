@@ -45,6 +45,11 @@ providers:
     default_model: llama3.1
   libretranslate:
     base_url: https://libretranslate.com
+  openrouter:
+    api_key: ${OPENROUTER_API_KEY}
+    default_model: openai/gpt-4o-mini
+    site_url: https://github.com/mohammadraufzahed/translate-mcp
+    site_name: translate-mcp
   custom:
     base_url: http://localhost:8000/v1
     default_model: default
